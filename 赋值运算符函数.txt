@@ -1,0 +1,41 @@
+重载赋值运算符
+	返回值：类型是该类型的引用
+		原因：为了实现连续赋值，如 a=b=c，否则，执行完a=b后返回值为void，=c将无法执行
+	传入的参数类型：常量引用
+		原因：常量--函数的功能不要求修改传入实例的状态，
+			  引用--提高代码执行效率。如果传入的是实例，则会调用一次复制构造函数，这是无谓的消耗
+	内存管理：释放已有的自己的内存
+		原因：不释放原来的内存会造成内存泄漏
+	判断传入的参数与当前的实例是不是同一个:同一个直接返回
+		原因：如果是同一个实例，释放内存后，赋值的内容也没有了。
+		
+	考虑以上四方面的代码：
+		CMyString& CMyString::operator =(const CMyString& str)
+		{
+			if(&str == this)
+			{
+				return *this;
+			}
+			delete []m_pData;
+			m_pData = nullptr;
+			
+			m_pData = new char[strlen(str.m_pData)+1];    //strlen 返回字符串的长度，不包括结束字符，返回类型为size_t类型，无符号整形
+			strcpy(m_pData,str.m_pData);
+			return *this;
+		}
+		缺点：先删除原来的数据，后分配新的内存。如果new的时候发生异常，内存不够用，原来的数据就丢失了
+		改进方法：1.确保分配成功再删除
+				  2.创建临时变量，利用临时变量自动释放原有的内存空间，自动申请新的内存
+		CMyString& CMyString::operator =(const CMyString& str)
+		{
+			if(&str != this)
+			{
+				CMyString strTemp(str);
+				char *temp = strTemp.m_pData;
+				strTemp.m_pData = m_pData;
+				m_pData = temp;
+			}
+			return *this;
+		}
+		
+	
